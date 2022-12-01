@@ -1,0 +1,7 @@
+matplotlib==3.5.2
+numpy==1.21.5
+opencv_python==4.5.5.64
+Pillow==9.3.0
+pyvista==0.35.1
+pandas
+seaborn

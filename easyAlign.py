@@ -115,28 +115,6 @@ def surfaceAreaAngle(path: str, x_range: list, y_range: list, z_og: float = 0, y
     
     return(surfAreaVals, surfAreaImgs)
 
-# synapse_paths = ["./paired synapse-vesicle meshes/1 - Synapse 408.stl",
-#                 # "./paired synapse-vesicle meshes/2 - Synapse 492.stl",
-#                 "./paired synapse-vesicle meshes/3 - Synapse 3.stl",
-#                 "./paired synapse-vesicle meshes/4 - Synapse 346.stl",
-#                 "./paired synapse-vesicle meshes/5 - Synapse 473.stl",
-#                 "./paired synapse-vesicle meshes/6 - Synapse 471.stl",
-#                 "./paired synapse-vesicle meshes/7 - Synapse 206.stl",
-#                 "./paired synapse-vesicle meshes/8 - Synapse 552.stl",
-#                 "./paired synapse-vesicle meshes/9 - Synapse 167.stl",
-#                 "./paired synapse-vesicle meshes/10 - Synapse 96.stl"]
-
-# vesicle_paths = ["./paired synapse-vesicle meshes/1 - Vesicle 631.stl",
-#                 # "./paired synapse-vesicle meshes/2 - Vesicle 698.stl",
-#                 "./paired synapse-vesicle meshes/3 - Vesicle 284.stl",
-#                 "./paired synapse-vesicle meshes/4 - Vesicle 275.stl",
-#                 "./paired synapse-vesicle meshes/5 - Vesicle 480.stl",
-#                 "./paired synapse-vesicle meshes/6 - Vesicle 290.stl",
-#                 "./paired synapse-vesicle meshes/7 - Vesicle 604.stl",
-#                 "./paired synapse-vesicle meshes/8 - Vesicle 752.stl",
-#                 "./paired synapse-vesicle meshes/9 - Vesicle 182.stl",
-#                 "./paired synapse-vesicle meshes/10 - Vesicle 66.stl"]
-
 camVesPos = []
 sfaVesPos = []
 vesAngle = []
@@ -144,22 +122,14 @@ vesAngle = []
 synDir = "paired synapse-vesicle meshes/Test Pairs/Synapse"
 vesDir = "paired synapse-vesicle meshes/Test Pairs/Vesicle"
 
-synFiles = num_sort(os.listdir(synDir))[1:]
-vesFiles = num_sort(os.listdir(vesDir))[1:]
+synFiles = num_sort(os.listdir(synDir))
+vesFiles = num_sort(os.listdir(vesDir))
 
 for idx, syn in enumerate(synFiles):
-# for idx, syn in enumerate(synFiles):
-
     syn = os.path.join(synDir, syn)
     ves = os.path.join(vesDir, vesFiles[idx])
 
     print(f"{syn}, {ves}")
-    
-    # start_time = time.time()
-    # camScale = find_scale(y_min, y_max, y_step, z_min, z_max, z_step, syn)
-    # image_array, minMaxVal, whiteArr = itr_rotate(y_min, y_max, y_step, z_min, z_max, z_step, syn, camScale)
-    # print("--- %s seconds ---" % (time.time() - start_time))
-    # brightnessGraph(whiteArr, image_array, 0.1, 1)
 
     sy_reader = pv.get_reader(syn)
     ves_reader = pv.get_reader(ves)
@@ -253,47 +223,6 @@ for idx, syn in enumerate(synFiles):
             camScales.append(p.camera.parallel_scale)
 
     print(max(camScales))
-
-    # surfAreaImgs = []
-    # surfAreaVals = []
-
-    # for i in x_range:
-
-    #     iterImgs = []
-    #     iterVals = []
-
-    #     for j in y_range:
-    #         sy_reader = pv.get_reader(syn)
-    #         synapse = sy_reader.read()
-    #         p = pv.Plotter(off_screen=True)
-
-    #         synapse.rotate_z(z_arccos, center, inplace=True)
-    #         synapse.rotate_y(y_arccos, center, inplace=True)
-
-    #         synapse.rotate_x(i, synapse.center, inplace=True)
-    #         synapse.rotate_y(j, synapse.center, inplace=True)
-
-    #         p.add_mesh(synapse)
-
-    #         p.camera.SetParallelProjection(True)
-    #         p.camera_position = 'xy'
-    #         p.camera.parallel_scale = max(camScales)
-
-    #         ss = p.screenshot()
-
-    #         iterImgs.append(ss)
-
-    #         _ss = cv2.cvtColor(ss, cv2.COLOR_BGR2GRAY)
-    #         ret, binary = cv2.threshold(_ss,76,255,cv2.THRESH_BINARY)
-    #         pixel_count = _ss.shape[0] * _ss.shape[1]
-    #         white_count = np.sum(binary == 255)
-    #         whiteRatio = round(100*white_count / pixel_count, 2)
-    #         iterVals.append(whiteRatio)
-        
-    #     surfAreaImgs.append(iterImgs)
-    #     surfAreaVals.append(iterVals)
-    
-    # brightnessGraph(surfAreaVals, surfAreaImgs)
 
     start_time = time.time()
     surfAreaVals, surfAreaImgs = surfaceAreaAngle(syn, x_range, y_range, z_arccos, y_arccos, center)

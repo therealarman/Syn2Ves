@@ -107,7 +107,6 @@ Difference = []
 zDiffs = []
 yDiffs = []
 IntersectVals = []
-IOUs = []
 
 synDir = "paired synapse-vesicle meshes/Test Pairs/Synapse"
 vesDir = "paired synapse-vesicle meshes/Test Pairs/Vesicle"
@@ -115,8 +114,7 @@ vesDir = "paired synapse-vesicle meshes/Test Pairs/Vesicle"
 synFiles = num_sort(os.listdir(synDir))
 vesFiles = num_sort(os.listdir(vesDir))
 
-for idx, syn in enumerate([synFiles[0]]):
-# for idx, syn in enumerate(synFiles):
+for idx, syn in enumerate(synFiles):
 
     syn = os.path.join(synDir, syn)
     ves = os.path.join(vesDir, vesFiles[idx])
@@ -135,7 +133,7 @@ for idx, syn in enumerate([synFiles[0]]):
     synapse = sy_reader.read()
     vesicle = ves_reader.read()
 
-    p = pv.Plotter(off_screen=True)
+    p = pv.Plotter(off_screen=False)
 
     p1 = tuple(synapse.center)
     p2 = tuple(vesicle.center)
@@ -173,93 +171,24 @@ for idx, syn in enumerate([synFiles[0]]):
 
     # ===========================================================
 
-    # p.close()
+    p.clear()
 
-    p.add_mesh(synRot, color="Blue", opacity = 0.5)
-    p.add_mesh(vesRot, color="Red", opacity = 0.5)
+    # p.add_mesh(synRot, color="Blue", opacity = 0.5)
+    # p.add_mesh(vesRot, color="Red", opacity = 0.5)
 
-    p.camera.SetParallelProjection(True)
-    p.camera_position = 'yz'
-    camScale = p.camera.parallel_scale
+    # p.camera.SetParallelProjection(True)
+    # p.camera_position = 'yz'
+    # camScale = p.camera.parallel_scale
 
-    #cv2.imwrite(f"output\{idx} - CamAlign.png", p.screenshot())
+    # p.show()
 
-    # p.close()
+    # print("Camera Alignment Rotation:")
+    # print(f"Z:{z_arccos}, Y: {y_arccos}")
 
-    p.show()
+    # print("MSA Alignment Rotation:")
+    # print(f"Z: {minMaxVal[1]}, Y: {minMaxVal[0]}")
 
-    # == Surface Area ==
-
-    p = pv.Plotter(off_screen=True)
-
-    synapseRot = copy.copy(synapse)
-    vesicleRot = copy.copy(vesicle)
-
-    synapseRot.rotate_y(minMaxVal[0], synapse.center, inplace=True)
-    synapseRot.rotate_z(minMaxVal[1], synapse.center, inplace=True)
-
-    vesicleRot.rotate_y(minMaxVal[0], synapse.center, inplace=True)
-    vesicleRot.rotate_z(minMaxVal[1], synapse.center, inplace=True)
-
-    normal = (1, 0, 0)
-    sy_projected = synapseRot.project_points_to_plane(origin=center, normal=normal)
-    ves_projected = vesicleRot.project_points_to_plane(origin=center, normal=normal)
-
-    p.add_mesh(synapseRot, color="Blue")
-    p.add_mesh(vesicleRot, color="Red")
-
-    p.camera_position = 'yz'
-    p.camera.SetParallelProjection(True)
-    p.camera.focal_point = center
-    camScale = p.camera.parallel_scale
-
-    #cv2.imwrite(f"output\{idx} - SurfAlign.png", p.screenshot())
-
-    p.close()
-
-    synPlot = pv.Plotter(off_screen=True)
-    vesPlot = pv.Plotter(off_screen=True)
-
-    synPlot.add_mesh(sy_projected, show_scalar_bar=False)
-    vesPlot.add_mesh(ves_projected, show_scalar_bar=False)
-
-    # == Flattening ==
-
-    synPlot.camera_position = 'yz'
-    synPlot.camera.SetParallelProjection(True)
-    synPlot.camera.focal_point = center
-    synPlot.camera.parallel_scale = camScale
-    synImg = synPlot.screenshot()
-
-    vesPlot.camera_position = 'yz'
-    vesPlot.camera.SetParallelProjection(True)
-    vesPlot.camera.focal_point = center
-    vesPlot.camera.parallel_scale = camScale
-    vesImg = vesPlot.screenshot()
-
-    synapseOverlay = cv2.cvtColor(synImg, cv2.COLOR_BGR2GRAY)
-    vesicleOverlay = cv2.cvtColor(vesImg, cv2.COLOR_BGR2GRAY)
-
-    # == Intersection ==
-
-    thresh=76
-    syn_bw = cv2.threshold(synapseOverlay, thresh, 255, cv2.THRESH_BINARY)[1]
-    ves_bw = cv2.threshold(vesicleOverlay, thresh, 255, cv2.THRESH_BINARY)[1]
-
-    mergedOverlay = cv2.addWeighted(syn_bw, 0.5, ves_bw, 0.5, 0)
-    intersectionImg = cv2.threshold(mergedOverlay, 128, 255, cv2.THRESH_BINARY)[1]
-
-    #cv2.imwrite(f"output\{idx} - Intersect.png", intersectionImg)
-
-    # intersection = (100 * np.sum(intersectionImg == 255)) / (intersectionImg.shape[0] * intersectionImg.shape[1])
-    # print(f"{intersectionImg.shape[0] * intersectionImg.shape[1]}, {np.sum(intersectionImg == 255)}")
-
-    mask1_area = np.count_nonzero( syn_bw )
-    mask2_area = np.count_nonzero( ves_bw )
-    intersection = np.count_nonzero( np.logical_and( syn_bw, ves_bw ) )
-    iou = intersection/(mask1_area+mask2_area-intersection)
-
-    # == Vals ==
+    # diff = tuple(map(lambda i, j: i - j, (z_arccos, y_arccos), (minMaxVal[1], minMaxVal[0])))
 
     z_diff = z_arccos - minMaxVal[1]
     y_diff = y_arccos - minMaxVal[0]
@@ -272,10 +201,9 @@ for idx, syn in enumerate([synFiles[0]]):
     SurfaceAreaRots.append( (z_arccos, y_arccos) )
     CameraAlignRots.append( (minMaxVal[1], minMaxVal[0]) )
     Difference.append( diff )
-    IntersectVals.append(intersection)
-    IOUs.append(iou)
+    IntersectVals.append(minMaxVal[2])
 
-d = {'SurfArea': SurfaceAreaRots, 'CamAlign': CameraAlignRots, 'Z Diff': zDiffs, 'Y Diff': yDiffs, 'Diff': Difference, 'Intersect': IntersectVals, 'IOU': IOUs}
+d = {'SurfArea': SurfaceAreaRots, 'CamAlign': CameraAlignRots, 'Z Diff': zDiffs, 'Y Diff': yDiffs, 'Diff': Difference, 'Intersect': IntersectVals}
 df = pd.DataFrame(data=d)
 
 df.to_csv("output/RotationData.csv")

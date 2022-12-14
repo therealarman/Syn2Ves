@@ -10,25 +10,29 @@ import cv2
 import math
 
 def rotateObj(reader: STLReader, rotList: Tuple[int, int, int], camScale: int):
-    p = pv.Plotter(off_screen=True)
+    p = pv.Plotter(off_screen=False)
     obj = reader.read()
 
     rot = obj.rotate_x(rotList[0], point=obj.center, inplace=True)
     rot = obj.rotate_y(rotList[1], point=obj.center, inplace=True)
     rot = obj.rotate_z(rotList[2], point=obj.center, inplace=True)
 
-    
-    normal = (1, 0, 0)
+    normal = (0, 0, 1)
     projected = rot.project_points_to_plane(origin=rot.center, normal=normal)
     
     p.add_mesh(projected, show_scalar_bar=False)
     
-    p.camera_position = 'yz'
+    p.camera_position = 'xy'
     p.camera.SetParallelProjection(True)
     p.window_size = (max(p.window_size), max(p.window_size))
     p.camera.parallel_scale = camScale
+
+    p.show()
+
+    screenshot = p.screenshot()
+    p.close()
     
-    return(p.screenshot())
+    return(screenshot)
 
 def rotate_get_scale(reader: STLReader, rotList: Tuple[int, int, int]):
     p = pv.Plotter(off_screen=True)
@@ -47,6 +51,8 @@ def rotate_get_scale(reader: STLReader, rotList: Tuple[int, int, int]):
     p.camera.SetParallelProjection(True)
     p.window_size = (max(p.window_size), max(p.window_size))
     camScale = p.camera.parallel_scale
+
+    p.close()
     
     return(camScale)
 
@@ -59,6 +65,9 @@ def getWhiteVals(imarray):
         ret, binary = cv2.threshold(x,76,255,cv2.THRESH_BINARY)
         pixel_count = x.shape[0] * x.shape[1]
         white_count = np.sum(binary == 255)
+
+        # print(f"{pixel_count}, {white_count}")
+        # print(round(100*white_count / pixel_count, 2))
 
         percent_vals.append(round(100*white_count / pixel_count, 2))
     
@@ -81,6 +90,7 @@ def itr_rotate(y_min: int, y_max: int, y_step: int, z_min: int, z_max: int, z_st
 
     circ_Imgs = []
     maxSurfaceArea = [0, 0, 0] #X, Y, Value
+    surfaceAreaVals = []
 
     for i in range(y_min, y_max, y_step):
         itr_arr = []
@@ -90,6 +100,9 @@ def itr_rotate(y_min: int, y_max: int, y_step: int, z_min: int, z_max: int, z_st
             itr_arr.append(screenshot)
 
             ss_w = getWhiteVals([screenshot])
+            
+            surfaceAreaVals.append(ss_w[0])
+
             if(ss_w[0] > maxSurfaceArea[2]):
                 maxSurfaceArea[0], maxSurfaceArea[1], maxSurfaceArea[2] = i, j, ss_w[0]
 
@@ -99,7 +112,7 @@ def itr_rotate(y_min: int, y_max: int, y_step: int, z_min: int, z_max: int, z_st
         # plt.axis('off')
         # plt.show()
     
-    return(circ_Imgs, maxSurfaceArea)
+    return(circ_Imgs, maxSurfaceArea, surfaceAreaVals)
 
 def find_scale(y_min: int, y_max: int, y_step: int, z_min: int, z_max: int, z_step: int, path: str):
     synapse_name = (path.split("/")[-1]).split(".")[0]

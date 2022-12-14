@@ -1,7 +1,0 @@
-matplotlib
-numpy
-opencv_python
-Pillow
-pyvista
-pandas
-seaborn

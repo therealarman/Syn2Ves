@@ -10,7 +10,7 @@ import cv2
 import math
 
 def rotateObj(reader: STLReader, rotList: Tuple[int, int, int], camScale: int):
-    p = pv.Plotter(off_screen=False)
+    p = pv.Plotter(off_screen=True)
     obj = reader.read()
 
     rot = obj.rotate_x(rotList[0], point=obj.center, inplace=True)
@@ -27,10 +27,10 @@ def rotateObj(reader: STLReader, rotList: Tuple[int, int, int], camScale: int):
     p.window_size = (max(p.window_size), max(p.window_size))
     p.camera.parallel_scale = camScale
 
-    p.show()
+    # p.show()
 
     screenshot = p.screenshot()
-    p.close()
+    # p.close()
     
     return(screenshot)
 

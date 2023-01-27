@@ -5,3 +5,4 @@ Synapse and vesicle alignment analysis tool
 - [ ] Remove unnecessary scripts (main copy, main, interect, etc.)
 - [ ] Clean & comment easyAlign.py
 - [ ] Add IOU back to easyAlign.py
+- [ ] Dragonfly implementation...

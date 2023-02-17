@@ -1,9 +1,9 @@
 """
 
 
-:author: 
+:author: Arman Alexis
 :contact: 
-:email: 
+:email: arman.alexis@mpfi.org
 :organization: 
 :address: 
 :copyright: 

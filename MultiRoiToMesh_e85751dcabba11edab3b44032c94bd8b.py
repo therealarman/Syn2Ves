@@ -1,9 +1,9 @@
 """
 
 
-:author: Arman Alexis
+:author: 
 :contact: 
-:email: arman.alexis@mpfi.org
+:email: 
 :organization: 
 :address: 
 :copyright: 
@@ -69,48 +69,56 @@ aFolder = os.path.join(QFileDialog.getExistingDirectory(WorkingContext.getCurren
 aFolder = os.path.join(aFolder, datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
 os.makedirs(aFolder, exist_ok=True)
 
-myMultiROI = (WorkingContext.getEntitiesOfClassAsObjects(None, OrsSelectedObjects, MultiROI.getClassNameStatic())[0])
-labels = myMultiROI.getNonEmptyLabels(None)
+listOfMultiROIs = (WorkingContext.getEntitiesOfClassAsObjects(None, OrsSelectedObjects, MultiROI.getClassNameStatic()))
+# myMultiROI = (WorkingContext.getEntitiesOfClassAsObjects(None, OrsSelectedObjects, MultiROI.getClassNameStatic())[0])
+for myMultiROI in listOfMultiROIs:
 
-_max = get_value("Max Index", len(labels))
-_max = clamp(_max, 1, len(labels))
+    myMultiTitle = myMultiROI.getTitle()
 
-for i in range(0, _max, 10):
-    batch = ORSModel.ors.ArrayUnsignedLong()
+    saveFolder = os.path.join(aFolder, myMultiTitle)
+    os.makedirs(saveFolder, exist_ok=True)
 
-    if(i+9 <= _max):
-        end = i+9
-    else:
-        end = i + _max%(i) - 1
+    labels = myMultiROI.getNonEmptyLabels(None)
 
-    labels.copyInto(anArray = batch,
-                    iInsertionIndex = 0,
-                    iStartIndex = i,
-                    iEndIndex = end)
+    _max = get_value(f"Maximum Label for '{myMultiTitle}'", len(labels))
+    _max = clamp(_max, 1, len(labels))
 
-    myMultiROI.setSelectedLabels(iTIndex = 0,
-                                labels = batch,
-                                selected = True)
+    for i in range(0, _max, 10):
+        batch = ORSModel.ors.ArrayUnsignedLong()
 
-    guids = MultiROILabelHelper.extractSelectedLabelsToROIs(multiroi=myMultiROI, tIndex=0)
+        if(i+9 <= _max):
+            end = i+9
+        else:
+            end = i + _max%(i) - 1
 
-    for guid in guids:
-        # guidsListElement = guids[0]
-        guidROI = Managed.getObjectWithGUID(guid)
-        guidROI.publish(logging=True)
+        labels.copyInto(anArray = batch,
+                        iInsertionIndex = 0,
+                        iStartIndex = i,
+                        iEndIndex = end)
 
-        guidMesh = create_mesh(guidROI, 'NORMAL', 1)
-        guidMesh.publish()
+        myMultiROI.setSelectedLabels(iTIndex = 0,
+                                    labels = batch,
+                                    selected = True)
 
-        meshTitle = guidMesh.getTitle()
+        guids = MultiROILabelHelper.extractSelectedLabelsToROIs(multiroi=myMultiROI, tIndex=0)
 
-        exportOutInt = OrsMeshSaver.exportMeshToFile(mesh=guidMesh,
-                                                    lut=None,
-                                                    filename=(str(aFolder) + str((str('\\') + str((str(meshTitle) + str('.stl')))))),
-                                                    centerAtOrigin=False, outputUnit=None, exportAsASCII=False, exportColors=False, showProgress=True)
+        for guid in guids:
+            # guidsListElement = guids[0]
+            guidROI = Managed.getObjectWithGUID(guid)
+            guidROI.publish(logging=True)
 
-        guidMesh.unpublish()
-        guidROI.unpublish()
+            guidMesh = create_mesh(guidROI, 'NORMAL', 1)
+            guidMesh.publish()
+
+            meshTitle = guidMesh.getTitle()
+
+            exportOutInt = OrsMeshSaver.exportMeshToFile(mesh=guidMesh,
+                                                        lut=None,
+                                                        filename=(str(saveFolder) + str((str('\\') + str((str(meshTitle) + str('.stl')))))),
+                                                        centerAtOrigin=False, outputUnit=None, exportAsASCII=False, exportColors=False, showProgress=True)
+
+            guidMesh.unpublish()
+            guidROI.unpublish()
 
 # ********** END MACRO ********** #
 

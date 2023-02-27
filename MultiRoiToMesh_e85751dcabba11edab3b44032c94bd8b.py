@@ -12,7 +12,7 @@
 :UUID: e85751dcabba11edab3b44032c94bd8b
 """
 
-__version__ = '1.0.0'
+__version__ = '1.1.0'
 
 # Action log Mon Feb 13 11:37:29 2023
 
@@ -36,6 +36,7 @@ from ORSServiceClass.ORSWidget.SimpleEntryDialog.simpleEntryDialog import Simple
 from PyQt5.QtWidgets import QFileDialog
 import os
 import datetime
+import time
 
 def show_msgbox(message, caption, title):
         message = str(caption) + str(message)
@@ -65,6 +66,8 @@ def clamp(num, min_value, max_value):
 
 ##### END OF BLOCKLY DEFINITIONS #####
 
+start_time = time.time()
+
 aFolder = os.path.join(QFileDialog.getExistingDirectory(WorkingContext.getCurrentContextWindow(), caption="Select folder ", options=QFileDialog.ShowDirsOnly), '')
 aFolder = os.path.join(aFolder, datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
 os.makedirs(aFolder, exist_ok=True)
@@ -80,16 +83,17 @@ for myMultiROI in listOfMultiROIs:
 
     labels = myMultiROI.getNonEmptyLabels(None)
 
-    _max = get_value(f"Maximum Label for '{myMultiTitle}'", len(labels))
-    _max = clamp(_max, 1, len(labels))
+    # _max = get_value(f"Maximum Label for '{myMultiTitle}'", len(labels))
+    # _max = clamp(_max, 1, len(labels))
+    _max = len(labels)
 
     for i in range(0, _max, 10):
         batch = ORSModel.ors.ArrayUnsignedLong()
 
-        if(i+9 <= _max):
-            end = i+9
+        if(i + 9 <= _max):
+            end = i + 9
         else:
-            end = i + _max%(i) - 1
+            end = _max - 1
 
         labels.copyInto(anArray = batch,
                         iInsertionIndex = 0,
@@ -100,17 +104,18 @@ for myMultiROI in listOfMultiROIs:
                                     labels = batch,
                                     selected = True)
 
+        selectedLabels = myMultiROI.getSelectedLabels(0)
+
         guids = MultiROILabelHelper.extractSelectedLabelsToROIs(multiroi=myMultiROI, tIndex=0)
 
-        for guid in guids:
-            # guidsListElement = guids[0]
+        for x, guid in enumerate(guids):
             guidROI = Managed.getObjectWithGUID(guid)
             guidROI.publish(logging=True)
 
-            guidMesh = create_mesh(guidROI, 'NORMAL', 1)
+            guidMesh = create_mesh(guidROI, 'NORMAL', 2)
             guidMesh.publish()
 
-            meshTitle = guidMesh.getTitle()
+            meshTitle = str(selectedLabels[x])
 
             exportOutInt = OrsMeshSaver.exportMeshToFile(mesh=guidMesh,
                                                         lut=None,
@@ -120,5 +125,10 @@ for myMultiROI in listOfMultiROIs:
             guidMesh.unpublish()
             guidROI.unpublish()
 
-# ********** END MACRO ********** #
+# timeFolder = os.path.join(aFolder, str(time.time() - start_time))
+# os.makedirs(timeFolder, exist_ok=True)
 
+with open(f'{aFolder}/runtime.txt', 'w') as f:
+    f.write(str(time.time() - start_time))
+
+# ********** END MACRO ********** #

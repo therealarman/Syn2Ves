@@ -12,7 +12,7 @@
 :UUID: e85751dcabba11edab3b44032c94bd8b
 """
 
-__version__ = '1.1.0'
+__version__ = '1.2.0'
 
 # Action log Mon Feb 13 11:37:29 2023
 
@@ -28,7 +28,7 @@ __version__ = '1.1.0'
 ##### START OF BLOCKLY DEFINITIONS #####
 from OrsLibraries.workingcontext import WorkingContext
 import ORSModel
-from ORSModel.ors import ROI, Managed
+from ORSModel.ors import ROI, Managed, DimensionUnit
 from ORSModel import OrsSelectedObjects
 from ORSServiceClass.messagebox.orsMessageBox import OrsTMessageBox
 from OrsPythonPlugins.OrsVolumeROITools.OrsVolumeROITools import OrsVolumeROITools
@@ -73,7 +73,7 @@ aFolder = os.path.join(aFolder, datetime.datetime.now().strftime('%Y-%m-%d_%H-%M
 os.makedirs(aFolder, exist_ok=True)
 
 listOfMultiROIs = (WorkingContext.getEntitiesOfClassAsObjects(None, OrsSelectedObjects, MultiROI.getClassNameStatic()))
-# myMultiROI = (WorkingContext.getEntitiesOfClassAsObjects(None, OrsSelectedObjects, MultiROI.getClassNameStatic())[0])
+
 for myMultiROI in listOfMultiROIs:
 
     myMultiTitle = myMultiROI.getTitle()
@@ -83,8 +83,6 @@ for myMultiROI in listOfMultiROIs:
 
     labels = myMultiROI.getNonEmptyLabels(None)
 
-    # _max = get_value(f"Maximum Label for '{myMultiTitle}'", len(labels))
-    # _max = clamp(_max, 1, len(labels))
     _max = len(labels)
 
     for i in range(0, _max, 10):
@@ -109,6 +107,7 @@ for myMultiROI in listOfMultiROIs:
         guids = MultiROILabelHelper.extractSelectedLabelsToROIs(multiroi=myMultiROI, tIndex=0)
 
         for x, guid in enumerate(guids):
+            
             guidROI = Managed.getObjectWithGUID(guid)
             guidROI.publish(logging=True)
 
@@ -122,8 +121,10 @@ for myMultiROI in listOfMultiROIs:
                                                         filename=(str(saveFolder) + str((str('\\') + str((str(meshTitle) + str('.stl')))))),
                                                         centerAtOrigin=False, outputUnit=None, exportAsASCII=False, exportColors=False, showProgress=True)
 
-            guidMesh.unpublish()
-            guidROI.unpublish()
+            # guidMesh.unpublish()
+            guidMesh.deleteObject()
+            # guidROI.unpublish()
+            guidROI.deleteObject()
 
 # timeFolder = os.path.join(aFolder, str(time.time() - start_time))
 # os.makedirs(timeFolder, exist_ok=True)

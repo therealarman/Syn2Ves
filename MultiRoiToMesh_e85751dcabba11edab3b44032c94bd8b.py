@@ -12,7 +12,7 @@
 :UUID: e85751dcabba11edab3b44032c94bd8b
 """
 
-__version__ = '1.2.0'
+__version__ = '1.3.0'
 
 # Action log Mon Feb 13 11:37:29 2023
 
@@ -74,6 +74,13 @@ os.makedirs(aFolder, exist_ok=True)
 
 listOfMultiROIs = (WorkingContext.getEntitiesOfClassAsObjects(None, OrsSelectedObjects, MultiROI.getClassNameStatic()))
 
+dm = DimensionUnit
+reg_key = dm.getRegistrationKeyFromCxvDimensionUniverse(1)
+dm = dm.getRegisteredUnit(reg_key)
+
+# 1 = Mirometer SURFACE
+# List of Dimension IDs: https://dev.theobjects.com/dragonfly_2022_2_release/COMWrapper/sphinxIndexCOMWrapper.html?highlight=cxvuniverse_dimension_type#cxvuniverse-dimension
+
 for myMultiROI in listOfMultiROIs:
 
     myMultiTitle = myMultiROI.getTitle()
@@ -82,7 +89,6 @@ for myMultiROI in listOfMultiROIs:
     os.makedirs(saveFolder, exist_ok=True)
 
     labels = myMultiROI.getNonEmptyLabels(None)
-
     _max = len(labels)
 
     for i in range(0, _max, 10):
@@ -111,7 +117,7 @@ for myMultiROI in listOfMultiROIs:
             guidROI = Managed.getObjectWithGUID(guid)
             guidROI.publish(logging=True)
 
-            guidMesh = create_mesh(guidROI, 'NORMAL', 2)
+            guidMesh = create_mesh(guidROI, 'NORMAL', 1)
             guidMesh.publish()
 
             meshTitle = str(selectedLabels[x])
@@ -121,13 +127,8 @@ for myMultiROI in listOfMultiROIs:
                                                         filename=(str(saveFolder) + str((str('\\') + str((str(meshTitle) + str('.stl')))))),
                                                         centerAtOrigin=False, outputUnit=None, exportAsASCII=False, exportColors=False, showProgress=True)
 
-            # guidMesh.unpublish()
             guidMesh.deleteObject()
-            # guidROI.unpublish()
             guidROI.deleteObject()
-
-# timeFolder = os.path.join(aFolder, str(time.time() - start_time))
-# os.makedirs(timeFolder, exist_ok=True)
 
 with open(f'{aFolder}/runtime.txt', 'w') as f:
     f.write(str(time.time() - start_time))

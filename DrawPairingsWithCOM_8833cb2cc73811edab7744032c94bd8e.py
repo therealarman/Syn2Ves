@@ -14,24 +14,29 @@
 
 __version__ = '1.0.0'
 
-from PyQt5.QtWidgets import QFileDialog
 import pandas as pd
 import openpyxl
-from ORSServiceClass.menuItems.contextualMenuItem import ContextualMenuItem
-from ORSServiceClass.actionAndMenu.menu import Menu
-from ORSServiceClass.decorators.infrastructure import interfaceMethod
-from OrsHelpers.ListHelper import ListHelper
-from OrsHelpers.primitivehelper import PrimitiveHelper
+
+from PyQt5.QtWidgets import QFileDialog
+
 import ORSModel
 from ORSModel import MultiROI
+from ORSModel import Managed
 from ORSModel import ROI
 from ORSModel import VisualRuler
 from ORSModel import Vector3
-from ORSModel import Managed
+
+from ORSServiceClass.actionAndMenu.menu import Menu
+from ORSServiceClass.decorators.infrastructure import interfaceMethod
+from ORSServiceClass.menuItems.contextualMenuItem import ContextualMenuItem
 from ORSServiceClass.ORSWidget.chooseObjectAndNewName.chooseObjectAndNewName import ChooseObjectAndNewName
-from OrsLibraries.workingcontext import WorkingContext
 from ORSServiceClass.ORSWidget.SimpleEntryDialog.simpleEntryDialog import SimpleEntryDialog
+
+from OrsHelpers.ListHelper import ListHelper
 from OrsHelpers.multiroilabelhelper import MultiROILabelHelper
+from OrsHelpers.primitivehelper import PrimitiveHelper
+
+from OrsLibraries.workingcontext import WorkingContext
 
 
 class DrawPairingsWithCOM_8833cb2cc73811edab7744032c94bd8e(ContextualMenuItem):
@@ -44,15 +49,14 @@ class DrawPairingsWithCOM_8833cb2cc73811edab7744032c94bd8e(ContextualMenuItem):
         :return: if True, the menu item will be displayed.
         """
 
-        '''if aCollectionOfObjects is None:
+        if aCollectionOfObjects is None:
             return False
 
         if len(aCollectionOfObjects) < 1:
             return False
 
         selectionIsOnlyMultiROIs = all([isinstance(obj, MultiROI) for obj in aCollectionOfObjects])
-        return selectionIsOnlyMultiROIs'''
-        return True
+        return selectionIsOnlyMultiROIs
 
     @classmethod
     def getMenuItemForSelection(cls, aCollectionOfObjects, implementation):
@@ -96,25 +100,13 @@ class DrawPairingsWithCOM_8833cb2cc73811edab7744032c94bd8e(ContextualMenuItem):
         synIndex = cls._getIndexValue()
         vesIndex = int(df1.iloc[synIndex-1]['vesLabel'])
 
-        # synMROI.setSelectedLabels(iTindex=0, labels=synIndex, selected=True)
-        # vesMROI.setSelectedLabels(iTindex=0, labels=vesIndex, selected=True)
-
         synROI = cls._exportLabelToROI(synMROI, synIndex)
         vesROI = cls._exportLabelToROI(vesMROI, vesIndex)
-
-        # TODO:
-        # DONE!! - Make new dataframe from df that uses 'synLabel' as index and 'vesLabel' as only column
-        # DONE!! -  Change menu to take 1 multiROI, then ask for a second one here
-        # - Ask what synapse to look at, then using that find matching vesicle using dataframe
-        # - Get COM of each using ORS functions
-        # - Set p1 and p2 to COMs
 
         aLayoutName = 'toplayout\\scene_0\\0\\3D'
         associatedState = 'OrsStateRulerEdit'
         t1 = 0
         t2 = 0
-        # p1 = Vector3(-473.63312693498449, -301.67902542372877, 0.5)
-        # p2 = Vector3(-447.65325077399382, -77.91631355932202, 0.5)
         p1 = synROI.getCenterOfMass(pTimeStep=0)
         p2 = vesROI.getCenterOfMass(pTimeStep=0)
         cls._createPrimitive(aLayoutName, associatedState, t1, p1, t2, p2)
@@ -153,7 +145,7 @@ class DrawPairingsWithCOM_8833cb2cc73811edab7744032c94bd8e(ContextualMenuItem):
         multiROI.setSelectedLabels(iTIndex=0, labels=_idx, selected=True)
         guid = MultiROILabelHelper.extractSelectedLabelsToROIs(multiroi=multiROI, tIndex=0)[0]
         guidROI = Managed.getObjectWithGUID(guid)
-        # guidROI.publish(logging=True)
+        guidROI.publish(logging=True)
         return(guidROI)
 
     @classmethod
@@ -188,7 +180,6 @@ class DrawPairingsWithCOM_8833cb2cc73811edab7744032c94bd8e(ContextualMenuItem):
         success1 = PrimitiveHelper.addControlPoint(anAnnotation=newAnnotation,
                                                   timeStep=t2,
                                                   position=p2)
-        # Assign the ruler label
 
         # Publishing the ruler
         newAnnotation.setIsRepresentable(isRepresentable=True, logging=True)

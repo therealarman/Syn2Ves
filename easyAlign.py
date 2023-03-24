@@ -118,6 +118,8 @@ def surfaceAreaAngle(path: str, x_range: list, y_range: list, z_og: float = 0, y
 camVesPos = []
 sfaVesPos = []
 vesAngle = []
+intersectVals = []
+iouVals = []
 
 synDir = "paired synapse-vesicle meshes/Test Pairs/Synapse"
 vesDir = "paired synapse-vesicle meshes/Test Pairs/Vesicle"
@@ -187,6 +189,8 @@ for idx, syn in enumerate(synFiles):
     p.camera.SetParallelProjection(True)
     p.camera_position = 'xy'
 
+    synVesCamScale = p.camera.parallel_scale
+
     # p.show()
 
     startRot = (0, y_arccos, z_arccos)
@@ -222,7 +226,7 @@ for idx, syn in enumerate(synFiles):
 
             camScales.append(p.camera.parallel_scale)
 
-    print(max(camScales))
+    # print(max(camScales))
 
     start_time = time.time()
     surfAreaVals, surfAreaImgs = surfaceAreaAngle(syn, x_range, y_range, z_arccos, y_arccos, center)
@@ -232,7 +236,7 @@ for idx, syn in enumerate(synFiles):
     rot_y_idx = int(np.where(surfAreaVals == maxSurfRot)[1][0])
     surface_area_x = x_range[rot_x_idx]
     surface_area_y = y_range[rot_y_idx]
-    print("--- %s seconds ---" % (time.time() - start_time))
+    print("Iter 1: %s seconds..." % (round(time.time() - start_time, 2)))
 
     x_min, x_max, x_step = surface_area_x - 45, surface_area_x + 45, 15
     x_range = range(x_min, x_max, x_step)
@@ -247,35 +251,82 @@ for idx, syn in enumerate(synFiles):
     _rot_y_idx = int(np.where(_surfAreaVals == _maxSurfRot)[1][0])
     _surface_area_x = x_range[_rot_x_idx]
     _surface_area_y = y_range[_rot_y_idx]
-    print("--- %s seconds ---" % (time.time() - start_time))
+    print("Iter 2: %s seconds..." % (round(time.time() - start_time, 2)))
 
     print(_surface_area_x)
     print(_surface_area_y)
 
     ves_reader = pv.get_reader(ves)
     vesicle = ves_reader.read()
-    p = pv.Plotter(off_screen=True)
+
+    sy_reader = pv.get_reader(syn)
+    synapse = sy_reader.read()
 
     vesicle.rotate_z(z_arccos, center, inplace=True)
     vesicle.rotate_y(y_arccos, center, inplace=True)
-
     vesicle.rotate_x(_surface_area_x, synapse_origin, inplace=True)
     vesicle.rotate_y(_surface_area_y, synapse_origin, inplace=True)
 
+    synapse.rotate_z(z_arccos, center, inplace=True)
+    synapse.rotate_y(y_arccos, center, inplace=True)
+    synapse.rotate_x(_surface_area_x, synapse_origin, inplace=True)
+    synapse.rotate_y(_surface_area_y, synapse_origin, inplace=True)
+
+    synPlot = pv.Plotter(off_screen=True)
+    vesPlot = pv.Plotter(off_screen=True)
+
+    synPlot.add_mesh(synapse, show_scalar_bar=False)
+    vesPlot.add_mesh(vesicle, show_scalar_bar=False)
+
+    # == Flattening ==
+
+    synPlot.camera_position = 'xy'
+    synPlot.camera.SetParallelProjection(True)
+    synPlot.camera.focal_point = center
+    synPlot.camera.parallel_scale = synVesCamScale
+    synImg = synPlot.screenshot()
+
+    vesPlot.camera_position = 'xy'
+    vesPlot.camera.SetParallelProjection(True)
+    vesPlot.camera.focal_point = center
+    vesPlot.camera.parallel_scale = synVesCamScale
+    vesImg = vesPlot.screenshot()
+
+    synapseOverlay = cv2.cvtColor(synImg, cv2.COLOR_BGR2GRAY)
+    vesicleOverlay = cv2.cvtColor(vesImg, cv2.COLOR_BGR2GRAY)
+
+    # == Intersection ==
+
+    thresh=76
+    syn_bw = cv2.threshold(synapseOverlay, thresh, 255, cv2.THRESH_BINARY)[1]
+    ves_bw = cv2.threshold(vesicleOverlay, thresh, 255, cv2.THRESH_BINARY)[1]
+
+    # mergedOverlay = cv2.addWeighted(syn_bw, 0.5, ves_bw, 0.5, 0)
+    # intersectionImg = cv2.threshold(mergedOverlay, 128, 255, cv2.THRESH_BINARY)[1]
+
+    # allious = cv2.hconcat([syn_bw, ves_bw, mergedOverlay, intersectionImg])
+    # plt.imshow(allious)
+    # plt.show()
+
+    mask1_area = np.count_nonzero( syn_bw )
+    mask2_area = np.count_nonzero( ves_bw )
+    intersection = np.count_nonzero( np.logical_and( syn_bw, ves_bw ) )
+    iou = intersection/(mask1_area+mask2_area-intersection)
+
+    print(f'IOU: {iou}')
+
     v1 = vesicle.center
+    vectorAngle = math.degrees(np.arccos((v0[0] * v1[0] + v0[1] * v1[1] + v0[2] * v1[2]) / ((v0[0]**2 + v0[1]**2 + v0[2]**2)**0.5 * (v1[0]**2 + v1[1]**2 + v1[2]**2)**0.5)))
 
-    print(v0)
-    print(v1)
-
-    vectorAngle = np.arccos((v0[0] * v1[0] + v0[1] * v1[1] + v0[2] * v1[2]) / ((v0[0]**2 + v0[1]**2 + v0[2]**2)**0.5 * (v1[0]**2 + v1[1]**2 + v1[2]**2)**0.5))
-
-    print(vectorAngle)
+    print(f'Vector Angle: {vectorAngle}')
 
     camVesPos.append(v0)
     sfaVesPos.append(v1)
     vesAngle.append(vectorAngle)
+    intersectVals.append(intersection)
+    iouVals.append(iou)
 
-d = {'CameraPosition': camVesPos, 'VesiclePosition': sfaVesPos, 'VectorAngle': vesAngle}
+d = {'CameraPosition': camVesPos, 'VesiclePosition': sfaVesPos, 'VectorAngle': vesAngle, 'Intersect': intersectVals, 'IOU': iouVals}
 df = pd.DataFrame(data=d)
 
 df.to_csv("output/VectorRotationData.csv")

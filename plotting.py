@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-data = pd.read_csv("VectorRotation.csv")
+data = pd.read_csv("output/VectorRotationData.csv")
 data.reset_index(drop=True)
 
 # data["Z Diff"] = data["Z Diff"].abs()
@@ -12,7 +12,7 @@ data.reset_index(drop=True)
 
 # sns.scatterplot(data=data, x="IOU", y="VectorDegrees")
 # sns.set_style("ticks")
-h = sns.jointplot(x=data["IOU"], y=data["VectorDegrees"], kind='scatter')
+h = sns.jointplot(x=data["IOU"], y=data["VectorAngle"], kind='scatter')
 
 h.set_axis_labels('Intersection Over Union', 'Skew (Degrees)')
 h.fig.suptitle('Skew Degrees vs Intersection Over Union')

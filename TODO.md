@@ -4,11 +4,12 @@
 
 ### Todo
 
-- [ ] Integrate Skew Code into Dragonfly  
+- [ ] ~~Convert Mesh Export Functionality from Macro to Top Level Menu~~
+- [ ] Convert Mesh Export Functionality from Macro to Contextual Menu
 
 ### In Progress
 
-- [ ] Convert Mesh Export Functionality from Macro to Top Level Menu  
+- [ ] Integrate Skew Code into Dragonfly  
 
 ### Done ✓
 

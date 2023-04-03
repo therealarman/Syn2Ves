@@ -5,3 +5,5 @@ Pillow
 pyvista
 pandas
 seaborn
+openpyxl
+pyvistaqt

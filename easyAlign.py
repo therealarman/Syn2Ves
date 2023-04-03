@@ -329,4 +329,4 @@ for idx, syn in enumerate(synFiles):
 d = {'CameraPosition': camVesPos, 'VesiclePosition': sfaVesPos, 'VectorAngle': vesAngle, 'Intersect': intersectVals, 'IOU': iouVals}
 df = pd.DataFrame(data=d)
 
-df.to_csv("output/VectorRotationData.csv")
+df.to_csv("output/TestVectorRotationData.csv")

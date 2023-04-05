@@ -3,7 +3,7 @@ import pyvista as pv
 from typing import List, Tuple
 import pandas as pd
 import numpy as np
-from PIL import Image, ImageEnhance
+from PIL import Image, ImageEnhance, ImageOps
 import os
 import cv2
 import math
@@ -54,13 +54,21 @@ def brightnessGraph(values_arr, images_arr, start = 0.25, end = 1):
         for j in range(len(images_arr[i])):
             img = images_arr[i][j]
             bright_img = Image.fromarray(img.astype('uint8'), 'RGB')
+            # bright_img = bright_img.convert('L')
             enhancer = ImageEnhance.Brightness(bright_img)
             bright_img = enhancer.enhance(norm_values[i][j])
+
+            if(norm_values[i][j] == np.amax(norm_values)):
+                bright_img = bright_img.convert('L')
+                bright_img = ImageOps.colorize(bright_img, black="black", white="green")
+
             brightArr[i][j] = np.array(bright_img)
+
     brightTile = concat_tile(brightArr)
 
-    plt.imshow(brightTile)
-    plt.show()
+    # plt.imshow(brightTile)
+    # plt.show()
+    return(brightTile)
 
 def concat_tile(im_list_2d):
     return cv2.vconcat([cv2.hconcat(im_list_h) for im_list_h in im_list_2d])
@@ -277,6 +285,16 @@ def Syn2Ves(synFiles: str, vesFiles: str, pairing: str):
         print(_surface_area_x)
         print(_surface_area_y)
 
+        # rotArrImg = concat_tile(_surfAreaImgs)
+        # plt.imshow(rotArrImg)
+        # plt.show()
+
+        iter1Graph = brightnessGraph(surfAreaVals, surfAreaImgs)
+        iter2Graph = brightnessGraph(_surfAreaVals, _surfAreaImgs)
+
+        cv2.imwrite(f"output/BrightGraphs/ITER1_{synIdx}_{vesIdx}.png", iter1Graph)
+        cv2.imwrite(f"output/BrightGraphs/ITER2_{synIdx}_{vesIdx}.png", iter2Graph)
+
         ves_reader = pv.get_reader(ves)
         vesicle = ves_reader.read()
 
@@ -325,12 +343,32 @@ def Syn2Ves(synFiles: str, vesFiles: str, pairing: str):
         syn_bw = cv2.threshold(synapseOverlay, thresh, 255, cv2.THRESH_BINARY)[1]
         ves_bw = cv2.threshold(vesicleOverlay, thresh, 255, cv2.THRESH_BINARY)[1]
 
-        # mergedOverlay = cv2.addWeighted(syn_bw, 0.5, ves_bw, 0.5, 0)
-        # intersectionImg = cv2.threshold(mergedOverlay, 128, 255, cv2.THRESH_BINARY)[1]
+        mergedOverlay = cv2.addWeighted(syn_bw, 0.5, ves_bw, 0.5, 0)
+        intersectionImg = cv2.threshold(mergedOverlay, 128, 255, cv2.THRESH_BINARY)[1]
 
         # allious = cv2.hconcat([syn_bw, ves_bw, mergedOverlay, intersectionImg])
-        # plt.imshow(allious)
+        fig, ax = plt.subplots(2,2)
+
+        ax[0,0].imshow(syn_bw)
+        ax[0,0].set_title("Synapse")
+        ax[0,0].axis('off')
+
+        ax[0,1].imshow(ves_bw)
+        ax[0,1].set_title("Vesicle")
+        ax[0,1].axis('off')
+
+        ax[1,0].imshow(mergedOverlay)
+        ax[1,0].set_title("Union")
+        ax[1,0].axis('off')
+
+        ax[1,1].imshow(intersectionImg)
+        ax[1,1].set_title("Intersection")
+        ax[1,1].axis('off')
+
+        plt.suptitle(f"Synapse {synIdx}, Vesicle {vesIdx}")
         # plt.show()
+        plt.savefig(f"output/Figs/IOU_{synIdx}_{vesIdx}.png")
+        plt.close()
 
         mask1_area = np.count_nonzero( syn_bw )
         mask2_area = np.count_nonzero( ves_bw )
@@ -350,10 +388,10 @@ def Syn2Ves(synFiles: str, vesFiles: str, pairing: str):
         intersectVals.append(intersection)
         iouVals.append(iou)
 
-    d = {'CameraPosition': camVesPos, 'VesiclePosition': sfaVesPos, 'VectorAngle': vesAngle, 'Intersect': intersectVals, 'IOU': iouVals}
+    # d = {'synLabel': df1(synLabel), 'vesLabel': 'CameraPosition': camVesPos, 'VesiclePosition': sfaVesPos, 'VectorAngle': vesAngle, 'Intersect': intersectVals, 'IOU': iouVals}
     df = pd.DataFrame(data=d)
 
-    df.to_csv("output/FullSD3_VectorRotationData.csv")
+    df.to_csv("output/_FullSD3_VectorRotationData.csv")
 
 
 now = datetime.now()

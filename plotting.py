@@ -2,7 +2,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+<<<<<<< Updated upstream
 data = pd.read_csv("output/FullSD3_VectorRotationData.csv")
+=======
+data = pd.read_csv("C:/Users/Arman/Downloads/FullSD3_VectorRotationData.csv")
+>>>>>>> Stashed changes
 data.reset_index(drop=True)
 
 # data["Z Diff"] = data["Z Diff"].abs()
@@ -12,12 +16,21 @@ data.reset_index(drop=True)
 
 # sns.scatterplot(data=data, x="IOU", y="VectorDegrees")
 # sns.set_style("ticks")
+
+mpfiColor = ["#007167"]
+
+sns.set_palette(sns.color_palette(mpfiColor))
+
 h = sns.jointplot(x=data["IOU"], y=data["VectorAngle"], kind='scatter')
 
-h.set_axis_labels('Intersection Over Union', 'Skew (Degrees)')
-h.fig.suptitle('Skew Degrees vs Intersection Over Union')
+plt.xlabel('Intersection Over Union', fontsize=15)
+plt.ylabel('Skew (Degrees)', fontsize=15)
+h.fig.suptitle('Skew Degrees vs Intersection Over Union', fontsize=20)
 
 h.fig.tight_layout()
 h.fig.subplots_adjust(top=0.90)
+
+h.fig.set_figwidth(8)
+h.fig.set_figheight(8)
 
 plt.show()

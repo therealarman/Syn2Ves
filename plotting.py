@@ -2,11 +2,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-<<<<<<< Updated upstream
-data = pd.read_csv("output/FullSD3_VectorRotationData.csv")
-=======
-data = pd.read_csv("C:/Users/Arman/Downloads/FullSD3_VectorRotationData.csv")
->>>>>>> Stashed changes
+# data = pd.read_csv("output/FullSD3_VectorRotationData.csv")
+# data = pd.read_csv("C:/Users/Arman/Downloads/FullSD3_VectorRotationData.csv")
 data.reset_index(drop=True)
 
 # data["Z Diff"] = data["Z Diff"].abs()

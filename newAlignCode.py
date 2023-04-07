@@ -74,7 +74,13 @@ def concat_tile(im_list_2d):
     return cv2.vconcat([cv2.hconcat(im_list_h) for im_list_h in im_list_2d])
 
 def arccos(adj, hyp, opp, mult = 1):
-    return(mult * 57.2958 * np.arccos(((adj**2 + hyp**2) - opp**2) / (2 * adj * hyp)))
+
+    if(adj != 0):
+        _arccos = mult * 57.2958 * np.arccos(((adj**2 + hyp**2) - opp**2) / (2 * adj * hyp))
+    else:
+        _arccos = 180
+
+    return(_arccos)
 
 def getTriangle(p1, center, p3): 
     p4 = ((p1[0]+p3[0])/2, (p1[1]+p3[1])/2)
@@ -132,12 +138,6 @@ def surfaceAreaAngle(path: str, camScales: list, x_range: list, y_range: list, z
     
     return(surfAreaVals, surfAreaImgs)
 
-synDir = "C:/Users/AlexisA/Documents/2023-02-22_12-54-06 - Normal/Final Synapses"
-vesDir = "C:/Users/AlexisA/Documents/2023-02-22_12-54-06 - Normal/Final Vesicles"
-
-# pairCsv = "C:/Users/AlexisA/Documents/testPairs.xlsx"
-pairCsv = "C:/Users/AlexisA/Documents/synVesPairs (Autosaved).xlsx"
-
 def Syn2Ves(synFiles: str, vesFiles: str, pairing: str):
     camVesPos = []
     sfaVesPos = []
@@ -147,6 +147,7 @@ def Syn2Ves(synFiles: str, vesFiles: str, pairing: str):
 
     df = pd.read_excel(pairing, engine='openpyxl')
     df1 = df[['synLabel', 'vesLabel']]
+    df1 = df1.sort_values(by=['synLabel'])
     
     synFiles = num_sort(os.listdir(synFiles))
     vesFiles = num_sort(os.listdir(vesFiles))
@@ -159,7 +160,7 @@ def Syn2Ves(synFiles: str, vesFiles: str, pairing: str):
         syn = os.path.join(synDir, synFiles[synIdx])
         ves = os.path.join(vesDir, vesFiles[vesIdx])
 
-        print(f"{synIdx+1}, {vesIdx+1}")
+        print(f"SYN: {synIdx+1}, VES: {vesIdx+1}")
 
         sy_reader = pv.get_reader(syn)
         ves_reader = pv.get_reader(ves)
@@ -255,8 +256,6 @@ def Syn2Ves(synFiles: str, vesFiles: str, pairing: str):
 
                 destroyPlot(p)
 
-        # print(max(camScales))
-
         start_time = time.time()
         surfAreaVals, surfAreaImgs = surfaceAreaAngle(syn, camScales, x_range, y_range, z_arccos, y_arccos, center)
         surfAreaVals = np.array(surfAreaVals)
@@ -265,7 +264,7 @@ def Syn2Ves(synFiles: str, vesFiles: str, pairing: str):
         rot_y_idx = int(np.where(surfAreaVals == maxSurfRot)[1][0])
         surface_area_x = x_range[rot_x_idx]
         surface_area_y = y_range[rot_y_idx]
-        print("Iter 1: %s seconds..." % (round(time.time() - start_time, 2)))
+        print("%s seconds..." % (round(time.time() - start_time, 2)))
 
         x_min, x_max, x_step = surface_area_x - 45, surface_area_x + 45, 15
         x_range = range(x_min, x_max, x_step)
@@ -280,20 +279,19 @@ def Syn2Ves(synFiles: str, vesFiles: str, pairing: str):
         _rot_y_idx = int(np.where(_surfAreaVals == _maxSurfRot)[1][0])
         _surface_area_x = x_range[_rot_x_idx]
         _surface_area_y = y_range[_rot_y_idx]
-        print("Iter 2: %s seconds..." % (round(time.time() - start_time, 2)))
+        print("%s seconds..." % (round(time.time() - start_time, 2)))
 
-        print(_surface_area_x)
-        print(_surface_area_y)
+        # print(f"SurfX: {_surface_area_x}, SurfY: {_surface_area_y}")
 
         # rotArrImg = concat_tile(_surfAreaImgs)
         # plt.imshow(rotArrImg)
         # plt.show()
 
-        iter1Graph = brightnessGraph(surfAreaVals, surfAreaImgs)
-        iter2Graph = brightnessGraph(_surfAreaVals, _surfAreaImgs)
+        # iter1Graph = brightnessGraph(surfAreaVals, surfAreaImgs)
+        # iter2Graph = brightnessGraph(_surfAreaVals, _surfAreaImgs)
 
-        cv2.imwrite(f"output/BrightGraphs/ITER1_{synIdx}_{vesIdx}.png", iter1Graph)
-        cv2.imwrite(f"output/BrightGraphs/ITER2_{synIdx}_{vesIdx}.png", iter2Graph)
+        # cv2.imwrite(f"output/BrightGraphs/ITER1_{synIdx}_{vesIdx}.png", iter1Graph)
+        # cv2.imwrite(f"output/BrightGraphs/ITER2_{synIdx}_{vesIdx}.png", iter2Graph)
 
         ves_reader = pv.get_reader(ves)
         vesicle = ves_reader.read()
@@ -347,7 +345,7 @@ def Syn2Ves(synFiles: str, vesFiles: str, pairing: str):
         intersectionImg = cv2.threshold(mergedOverlay, 128, 255, cv2.THRESH_BINARY)[1]
 
         # allious = cv2.hconcat([syn_bw, ves_bw, mergedOverlay, intersectionImg])
-        fig, ax = plt.subplots(2,2)
+        '''fig, ax = plt.subplots(2,2)
 
         ax[0,0].imshow(syn_bw)
         ax[0,0].set_title("Synapse")
@@ -368,19 +366,19 @@ def Syn2Ves(synFiles: str, vesFiles: str, pairing: str):
         plt.suptitle(f"Synapse {synIdx}, Vesicle {vesIdx}")
         # plt.show()
         plt.savefig(f"output/Figs/IOU_{synIdx}_{vesIdx}.png")
-        plt.close()
+        plt.close()'''
 
         mask1_area = np.count_nonzero( syn_bw )
         mask2_area = np.count_nonzero( ves_bw )
         intersection = np.count_nonzero( np.logical_and( syn_bw, ves_bw ) )
         iou = intersection/(mask1_area+mask2_area-intersection)
 
-        print(f'IOU: {iou}')
+        # print(f'IOU: {iou}')
 
         v1 = vesicle.center
         vectorAngle = math.degrees(np.arccos((v0[0] * v1[0] + v0[1] * v1[1] + v0[2] * v1[2]) / ((v0[0]**2 + v0[1]**2 + v0[2]**2)**0.5 * (v1[0]**2 + v1[1]**2 + v1[2]**2)**0.5)))
 
-        print(f'Vector Angle: {vectorAngle}')
+        # print(f'Vector Angle: {vectorAngle}')
 
         camVesPos.append(v0)
         sfaVesPos.append(v1)
@@ -388,11 +386,15 @@ def Syn2Ves(synFiles: str, vesFiles: str, pairing: str):
         intersectVals.append(intersection)
         iouVals.append(iou)
 
-    # d = {'synLabel': df1(synLabel), 'vesLabel': 'CameraPosition': camVesPos, 'VesiclePosition': sfaVesPos, 'VectorAngle': vesAngle, 'Intersect': intersectVals, 'IOU': iouVals}
+    d = {'synLabel': df1[synLabel].tolist(), 'vesLabel': df1[vesLabel].tolist(), 'CameraPosition': camVesPos, 'VesiclePosition': sfaVesPos, 'VectorAngle': vesAngle, 'Intersect': intersectVals, 'IOU': iouVals}
     df = pd.DataFrame(data=d)
 
-    df.to_csv("output/_FullSD3_VectorRotationData.csv")
+    df.to_csv("output/NLGN2_VectorRotationData.csv")
 
+
+synDir = "C:/Users/Arman/Documents/NLGN 2/2023-04-05_12-27-25/Synapses final proof (as Multi-ROI)"
+vesDir = "C:/Users/Arman/Documents/NLGN 2/2023-04-05_12-27-25/Vesicles final proof (as Multi-ROI)"
+pairCsv = "C:/Users/Arman/Documents/NLGN2_Master.xlsx"
 
 now = datetime.now()
 current_time = now.strftime("%H:%M:%S")

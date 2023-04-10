@@ -12,7 +12,7 @@
 :UUID: e85751dcabba11edab3b44032c94bd8b
 """
 
-__version__ = '1.3.0'
+__version__ = '1.4.0'
 
 # Action log Mon Feb 13 11:37:29 2023
 
@@ -91,18 +91,31 @@ for myMultiROI in listOfMultiROIs:
     labels = myMultiROI.getNonEmptyLabels(None)
     _max = len(labels)
 
-    for i in range(0, _max, 10):
+    print(_max)
+
+    # for i in range(850, _max, 10):
+    for i in range(0, _max):
         batch = ORSModel.ors.ArrayUnsignedLong()
+        '''
 
         if(i + 9 <= _max):
             end = i + 9
         else:
             end = _max - 1
 
-        labels.copyInto(anArray = batch,
-                        iInsertionIndex = 0,
-                        iStartIndex = i,
-                        iEndIndex = end)
+        labelsToSelect = range(i, end)
+        print(labelsToSelect)'''
+
+        # print(f"{i} - {end}")
+
+        # labels.copyInto(anArray = batch,
+        #                 iInsertionIndex = 0,
+        #                 iStartIndex = i,
+        #                 iEndIndex = end)
+
+        # print(labels.at(2))
+
+        batch.atPut(0, i)
 
         myMultiROI.setSelectedLabels(iTIndex = 0,
                                     labels = batch,

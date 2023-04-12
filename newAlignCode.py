@@ -138,16 +138,30 @@ def surfaceAreaAngle(path: str, camScales: list, x_range: list, y_range: list, z
     
     return(surfAreaVals, surfAreaImgs)
 
-def Syn2Ves(synFiles: str, vesFiles: str, pairing: str):
-    camVesPos = []
-    sfaVesPos = []
+def Syn2Ves(synFiles: str, vesFiles: str, pairing: str, outFilePath: str):
+    camVesPos_x = []
+    camVesPos_y = []
+    camVesPos_z = []
+
+    synPos_x = []
+    synPos_y = []
+    synPos_z = []
+
+    sfaVesPos_x = []
+    sfaVesPos_y = []
+    sfaVesPos_z = []
+
     vesAngle = []
     intersectVals = []
     iouVals = []
+    iosVals = []
 
     df = pd.read_excel(pairing, engine='openpyxl')
+    # df = pd.read_csv(pairing)
     df1 = df[['synLabel', 'vesLabel']]
     df1 = df1.sort_values(by=['synLabel'])
+    # df1 = df1.tail(-90)
+    # df1 = df1.tail(100)
     
     synFiles = num_sort(os.listdir(synFiles))
     vesFiles = num_sort(os.listdir(vesFiles))
@@ -214,6 +228,8 @@ def Syn2Ves(synFiles: str, vesFiles: str, pairing: str):
 
         p.add_mesh(synRot, color="Blue", opacity = 0.5, lighting=False)
         p.add_mesh(vesRot, color="Red", opacity = 0.5, lighting=False)
+
+        quickCamPos = p.camera.position
 
         p.camera.SetParallelProjection(True)
         p.camera_position = 'xy'
@@ -315,6 +331,33 @@ def Syn2Ves(synFiles: str, vesFiles: str, pairing: str):
         synPlot.add_mesh(synapse, show_scalar_bar=False, lighting=False)
         vesPlot.add_mesh(vesicle, show_scalar_bar=False, lighting=False)
 
+        '''visPlot = pv.Plotter(off_screen=False)
+    
+        visPlot.add_mesh(synapse, color="r", show_scalar_bar=False, lighting=True, opacity = 0.5)
+        visPlot.add_mesh(vesicle, color="b", show_scalar_bar=False, lighting=True, opacity = 0.5)
+        visPlot.add_mesh(synRot, color="r", show_scalar_bar=False, lighting=True, opacity=.2)
+        visPlot.add_mesh(vesRot, color="g", show_scalar_bar=False, lighting=True, opacity=.2)
+        
+        v_p1 = [vesRot.center[0], vesRot.center[1], vesRot.center[2]]
+        v_p2 = [vesicle.center[0], vesicle.center[1], vesicle.center[2]]
+        s_p1 = [synapse.center[0], synapse.center[1], synapse.center[2]]
+
+        vesLine = pv.Line(v_p1, v_p2)
+        synLine = pv.Line(s_p1, v_p1)
+        _synLine = pv.Line(s_p1, v_p2)
+
+        s1 = pv.Sphere(0.00000005, v_p1)
+        s2 = pv.Sphere(0.00000005, v_p2)
+
+        visPlot.add_mesh(s1)
+        visPlot.add_mesh(s2)
+
+        visPlot.add_mesh(vesLine, color="w")
+        visPlot.add_mesh(synLine, color="w")
+        visPlot.add_mesh(_synLine, color="w")
+
+        visPlot.show()'''
+
         # == Flattening ==
 
         synPlot.camera_position = 'xy'
@@ -322,6 +365,7 @@ def Syn2Ves(synFiles: str, vesFiles: str, pairing: str):
         synPlot.camera.focal_point = center
         synPlot.camera.parallel_scale = synVesCamScale
         synImg = synPlot.screenshot()
+        # synPlot.show()
 
         vesPlot.camera_position = 'xy'
         vesPlot.camera.SetParallelProjection(True)
@@ -345,63 +389,119 @@ def Syn2Ves(synFiles: str, vesFiles: str, pairing: str):
         intersectionImg = cv2.threshold(mergedOverlay, 128, 255, cv2.THRESH_BINARY)[1]
 
         # allious = cv2.hconcat([syn_bw, ves_bw, mergedOverlay, intersectionImg])
-        '''fig, ax = plt.subplots(2,2)
+        # fig, ax = plt.subplots(2,2)
 
-        ax[0,0].imshow(syn_bw)
-        ax[0,0].set_title("Synapse")
-        ax[0,0].axis('off')
+        # ax[0,0].imshow(syn_bw)
+        # ax[0,0].set_title("Synapse")
+        # ax[0,0].axis('off')
 
-        ax[0,1].imshow(ves_bw)
-        ax[0,1].set_title("Vesicle")
-        ax[0,1].axis('off')
+        # ax[0,1].imshow(ves_bw)
+        # ax[0,1].set_title("Vesicle")
+        # ax[0,1].axis('off')
 
-        ax[1,0].imshow(mergedOverlay)
-        ax[1,0].set_title("Union")
-        ax[1,0].axis('off')
+        # ax[1,0].imshow(mergedOverlay)
+        # ax[1,0].set_title("Union")
+        # ax[1,0].axis('off')
 
-        ax[1,1].imshow(intersectionImg)
-        ax[1,1].set_title("Intersection")
-        ax[1,1].axis('off')
+        # ax[1,1].imshow(intersectionImg)
+        # ax[1,1].set_title("Intersection")
+        # ax[1,1].axis('off')
 
-        plt.suptitle(f"Synapse {synIdx}, Vesicle {vesIdx}")
+        # plt.suptitle(f"Synapse {synIdx}, Vesicle {vesIdx}")
         # plt.show()
-        plt.savefig(f"output/Figs/IOU_{synIdx}_{vesIdx}.png")
-        plt.close()'''
+        # # plt.savefig(f"output/Figs/IOU_{synIdx}_{vesIdx}.png")
+        # plt.close()
 
-        mask1_area = np.count_nonzero( syn_bw )
-        mask2_area = np.count_nonzero( ves_bw )
+        syn_mask = np.count_nonzero( syn_bw )
+        ves_mask = np.count_nonzero( ves_bw )
         intersection = np.count_nonzero( np.logical_and( syn_bw, ves_bw ) )
-        iou = intersection/(mask1_area+mask2_area-intersection)
-
-        # print(f'IOU: {iou}')
+        union = syn_mask + ves_mask - intersection
+        iou = intersection/(union)
+        ios = intersection/(syn_mask)
 
         v1 = vesicle.center
-        vectorAngle = math.degrees(np.arccos((v0[0] * v1[0] + v0[1] * v1[1] + v0[2] * v1[2]) / ((v0[0]**2 + v0[1]**2 + v0[2]**2)**0.5 * (v1[0]**2 + v1[1]**2 + v1[2]**2)**0.5)))
+        s0 = synapse.center
+        
+        vectorAngle = math.degrees(np.arccos(
+            ((v0[0] - s0[0]) * (v1[0] - s0[0]) + (v0[1] - s0[1]) * (v1[1] - s0[1]) + (v0[2] - s0[2]) * (v1[2] - s0[2])) / 
+            (((v0[0] - s0[0])**2 + (v0[1] - s0[1])**2 + (v0[2] - s0[2])**2)**0.5 * ((v1[0] - s0[0])**2 + (v1[1] - s0[1])**2 + (v1[2] - s0[2])**2)**0.5)
+            ))
 
-        # print(f'Vector Angle: {vectorAngle}')
+        camVesPos_x.append(v0[0])
+        camVesPos_y.append(v0[1])
+        camVesPos_z.append(v0[2])
 
-        camVesPos.append(v0)
-        sfaVesPos.append(v1)
+        sfaVesPos_x.append(v1[0])
+        sfaVesPos_y.append(v1[1])
+        sfaVesPos_z.append(v1[2])
+
+        synPos_x.append(s0[0])
+        synPos_y.append(s0[1])
+        synPos_z.append(s0[2])
+
         vesAngle.append(vectorAngle)
         intersectVals.append(intersection)
         iouVals.append(iou)
+        iosVals.append(ios)
 
-    d = {'synLabel': df1[synLabel].tolist(), 'vesLabel': df1[vesLabel].tolist(), 'CameraPosition': camVesPos, 'VesiclePosition': sfaVesPos, 'VectorAngle': vesAngle, 'Intersect': intersectVals, 'IOU': iouVals}
+    # d = {'synLabel': df1['synLabel'].tolist(), 'vesLabel': df1['vesLabel'].tolist(), 'CameraPosition': camVesPos, 'VesiclePosition': sfaVesPos, 'VectorAngle': vesAngle, 'Intersect': intersectVals, 'IOU': iouVals, 'IOS': iosVals}
+    # d = {'CameraPosition': camVesPos, 'Ves_X': sfaVesPos_x, 'Ves_Y': sfaVesPos_y, 'Ves_Z': sfaVesPos_z, 'VectorAngle': vesAngle, 'Intersect': intersectVals, 'IOU': iouVals, 'IOS': iosVals}
+    d = {'synLabel': df1['synLabel'].tolist(), 'vesLabel': df1['vesLabel'].tolist(), 'OG_Ves_X': camVesPos_x, 'OG_Ves_Y': camVesPos_y, 'OG_Ves_Z': camVesPos_z, 'Ves_X': sfaVesPos_x, 'Ves_Y': sfaVesPos_y, 'Ves_Z': sfaVesPos_z, 'Syn_X': synPos_x, 'Syn_Y': synPos_y, 'Syn_Z': synPos_z, 'VectorAngle': vesAngle, 'Intersect': intersectVals, 'IOU': iouVals, 'IOS': iosVals}
     df = pd.DataFrame(data=d)
 
-    df.to_csv("output/NLGN2_VectorRotationData.csv")
+    df.to_csv(outFilePath)
+    print("\n\nFinished!\n\n")
 
+# now = datetime.now()
+# current_time = now.strftime("%H:%M:%S")
+# print("Start Time =", current_time)
 
-synDir = "C:/Users/Arman/Documents/NLGN 2/2023-04-05_12-27-25/Synapses final proof (as Multi-ROI)"
-vesDir = "C:/Users/Arman/Documents/NLGN 2/2023-04-05_12-27-25/Vesicles final proof (as Multi-ROI)"
-pairCsv = "C:/Users/Arman/Documents/NLGN2_Master.xlsx"
+# synDir = "C:/Users/AlexisA/Documents/2023-02-22_12-54-06 - Normal/Final Synapses"
+# vesDir = "C:/Users/AlexisA/Documents/2023-02-22_12-54-06 - Normal/Final Vesicles"
+# pairCsv = "Z:/Undergrads/Arman 2022/SD3 AND NLGN MESH EXPORTS/Pairing by Mesh NND/SD3_5/synVesPairsFromMesh.csv"
+# outFile = "C:/Users/AlexisA/Desktop/Mesn_NND_Outputs/SD3_5_Mesh_VectorRotationData.csv"
+# Syn2Ves(synDir, vesDir, pairCsv, outFile)
 
-now = datetime.now()
-current_time = now.strftime("%H:%M:%S")
-print("Start Time =", current_time)
+# synDir = "C:/Users/AlexisA/Documents/SD3 AND NGLN MESH EXPORTS/SD3 3/2023-04-05_12-59-10/Final Synapses (as Multi-ROI)"
+# vesDir = "C:/Users/AlexisA/Documents/SD3 AND NGLN MESH EXPORTS/SD3 3/2023-04-05_12-59-10/Final Vesicles (as Multi-ROI)"
+# pairCsv = "Z:/Undergrads/Arman 2022/SD3 AND NLGN MESH EXPORTS/Pairing by Mesh NND/SD3_3/synVesPairsFromMesh.csv"
+# outFile = "C:/Users/AlexisA/Desktop/Mesn_NND_Outputs/SD3_3_Mesh_VectorRotationData.csv"
+# Syn2Ves(synDir, vesDir, pairCsv, outFile)
 
-Syn2Ves(synDir, vesDir, pairCsv)
+# synDir = "C:/Users/AlexisA/Documents/SD3 AND NGLN MESH EXPORTS/NLGN 2/2023-04-05_12-27-25/Synapses final proof (as Multi-ROI)"
+# vesDir = "C:/Users/AlexisA/Documents/SD3 AND NGLN MESH EXPORTS/NLGN 2/2023-04-05_12-27-25/Vesicles final proof (as Multi-ROI)"
+# pairCsv = "Z:/Undergrads/Arman 2022/SD3 AND NLGN MESH EXPORTS/Pairing by Mesh NND/NLGN++_2/synVesPairsFromMesh.csv"
+# outFile = "C:/Users/AlexisA/Desktop/Mesn_NND_Outputs/NLGN2_Mesh_VectorRotationData.csv"
+# Syn2Ves(synDir, vesDir, pairCsv, outFile)
 
-now = datetime.now()
-current_time = now.strftime("%H:%M:%S")
-print("End Time =", current_time)
+# synDir = "C:/Users/AlexisA/Documents/SD3 AND NGLN MESH EXPORTS/NLGN 4/2023-04-06_16-07-34/Final synapses (as Multi-ROI)"
+# vesDir = "C:/Users/AlexisA/Documents/SD3 AND NGLN MESH EXPORTS/NLGN 4/2023-04-06_16-07-34/Final vesicles (as Multi-ROI)"
+# pairCsv = "Z:/Undergrads/Arman 2022/SD3 AND NLGN MESH EXPORTS/Pairing by Mesh NND/NLGN++_4/synVesPairsFromMesh.csv"
+# outFile = "C:/Users/AlexisA/Desktop/Mesn_NND_Outputs/NLGN4_Mesh_VectorRotationData.csv"
+# Syn2Ves(synDir, vesDir, pairCsv, outFile)
+
+# OLD DATASETS BELOWWW
+
+synDir = "C:/Users/AlexisA/Documents/2023-02-22_12-54-06 - Normal/Final Synapses"
+vesDir = "C:/Users/AlexisA/Documents/2023-02-22_12-54-06 - Normal/Final Vesicles"
+pairCsv = "C:/Users/AlexisA/Documents/synVesPairs (Autosaved).xlsx"
+outFile = "output/new/SD3_5_VectorRotationData.csv"
+Syn2Ves(synDir, vesDir, pairCsv, outFile)
+
+synDir = "C:/Users/AlexisA/Documents/SD3 AND NGLN MESH EXPORTS/SD3 3/2023-04-05_12-59-10/Final Synapses (as Multi-ROI)"
+vesDir = "C:/Users/AlexisA/Documents/SD3 AND NGLN MESH EXPORTS/SD3 3/2023-04-05_12-59-10/Final Vesicles (as Multi-ROI)"
+pairCsv = "C:/Users/AlexisA/Documents/SD3 AND NGLN MESH EXPORTS/SD3 3/SD3_3_Master.xlsx"
+outFile = "output/new/SD3_3_VectorRotationData.csv"
+Syn2Ves(synDir, vesDir, pairCsv, outFile)
+
+synDir = "C:/Users/AlexisA/Documents/SD3 AND NGLN MESH EXPORTS/NLGN 2/2023-04-05_12-27-25/Synapses final proof (as Multi-ROI)"
+vesDir = "C:/Users/AlexisA/Documents/SD3 AND NGLN MESH EXPORTS/NLGN 2/2023-04-05_12-27-25/Vesicles final proof (as Multi-ROI)"
+pairCsv = "C:/Users/AlexisA/Documents/SD3 AND NGLN MESH EXPORTS/NLGN 2/NLGN2_Master.xlsx"
+outFile = "output/new/BLANK_NLGN2_VectorRotationData.csv"
+Syn2Ves(synDir, vesDir, pairCsv, outFile)
+
+synDir = "C:/Users/AlexisA/Documents/SD3 AND NGLN MESH EXPORTS/NLGN 4/2023-04-06_16-07-34/Final synapses (as Multi-ROI)"
+vesDir = "C:/Users/AlexisA/Documents/SD3 AND NGLN MESH EXPORTS/NLGN 4/2023-04-06_16-07-34/Final vesicles (as Multi-ROI)"
+pairCsv = "C:/Users/AlexisA/Documents/SD3 AND NGLN MESH EXPORTS/NLGN 4/NLGN4_Master.xlsx"
+outFile = "output/new/NLGN4_VectorRotationData.csv"
+Syn2Ves(synDir, vesDir, pairCsv, outFile)

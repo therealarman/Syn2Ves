@@ -12,7 +12,7 @@
 :UUID: e85751dcabba11edab3b44032c94bd8b
 """
 
-__version__ = '1.4.0'
+__version__ = '1.5.0'
 
 # Action log Mon Feb 13 11:37:29 2023
 

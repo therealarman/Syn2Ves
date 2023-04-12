@@ -94,26 +94,8 @@ for myMultiROI in listOfMultiROIs:
     print(_max)
 
     # for i in range(850, _max, 10):
-    for i in range(0, _max):
+    for i in range(0, _max+1):
         batch = ORSModel.ors.ArrayUnsignedLong()
-        '''
-
-        if(i + 9 <= _max):
-            end = i + 9
-        else:
-            end = _max - 1
-
-        labelsToSelect = range(i, end)
-        print(labelsToSelect)'''
-
-        # print(f"{i} - {end}")
-
-        # labels.copyInto(anArray = batch,
-        #                 iInsertionIndex = 0,
-        #                 iStartIndex = i,
-        #                 iEndIndex = end)
-
-        # print(labels.at(2))
 
         batch.atPut(0, i)
 
